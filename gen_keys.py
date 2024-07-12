@@ -47,31 +47,35 @@ def get_keys(challenge, keyId=0, filename="eth_mnemonic.txt"):
 
     w3 = Web3()
 
+    # Generate or load keys
     if os.path.exists(filename):
         with open(filename, "r") as f:
-            mnemonics = f.readlines()
+            private_keys = f.readlines()
     else:
-        mnemonics = []
+        private_keys = []
 
-    if len(mnemonics) <= keyId:
-        mnemonic = eth_account.Account.create().mnemonic
-        mnemonics.append(mnemonic)
+    if len(private_keys) <= keyId:
+        # Generate a new account
+        acct = eth_account.Account.create()
+        private_keys.append(acct.privateKey.hex())
         with open(filename, "a") as f:
-            f.write(mnemonic + "\n")
+            f.write(acct.privateKey.hex() + "\n")
     else:
-        mnemonic = mnemonics[keyId].strip()
+        private_key = private_keys[keyId].strip()
+        acct = eth_account.Account.from_key(private_key)
 
-    account = eth_account.Account.from_mnemonic(mnemonic)
-
+    # Sign the challenge
     msg = eth_account.messages.encode_defunct(challenge)
-    signature = w3.eth.account.sign_message(msg, private_key=account.privateKey)
+    sig = w3.eth.account.sign_message(msg, private_key=acct.privateKey)
 
-    eth_addr = account.address
+    # Get Ethereum address from the account
+    eth_addr = acct.address
 
-    assert eth_account.Account.recover_message(msg, signature=signature.signature.hex()) == eth_addr, \
+    # Verify the signature to ensure everything works
+    assert eth_account.Account.recover_message(msg, signature=sig.signature.hex()) == eth_addr, \
         "Failed to sign message properly"
 
-    return signature, eth_addr
+    return sig, eth_addr
 
 if __name__ == "__main__":
     for i in range(4):
