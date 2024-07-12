@@ -34,15 +34,15 @@ from web3 import Web3
 import eth_account
 import os
 
-def get_keys(challenge, keyId=0, filename="eth_mnemonic.txt"):
+def get_keys(challenge, keyId=0, filename="eth_keys.txt"):
     """
     Generate a stable private key
     challenge - byte string
     keyId (integer) - which key to use
-    filename - filename to read and store mnemonics
+    filename - filename to read and store keys
 
-    Each mnemonic is stored on a separate line
-    If fewer than (keyId+1) mnemonics have been generated, generate a new one and return that
+    Each private key is stored on a separate line
+    If fewer than (keyId+1) keys have been generated, generate a new one and return that
     """
 
     w3 = Web3()
@@ -57,16 +57,16 @@ def get_keys(challenge, keyId=0, filename="eth_mnemonic.txt"):
     if len(private_keys) <= keyId:
         # Generate a new account
         acct = eth_account.Account.create()
-        private_keys.append(acct.privateKey.hex())
+        private_keys.append(acct.key.hex())
         with open(filename, "a") as f:
-            f.write(acct.privateKey.hex() + "\n")
+            f.write(acct.key.hex() + "\n")
     else:
         private_key = private_keys[keyId].strip()
         acct = eth_account.Account.from_key(private_key)
 
     # Sign the challenge
     msg = eth_account.messages.encode_defunct(challenge)
-    sig = w3.eth.account.sign_message(msg, private_key=acct.privateKey)
+    sig = w3.eth.account.sign_message(msg, private_key=acct.key)
 
     # Get Ethereum address from the account
     eth_addr = acct.address
