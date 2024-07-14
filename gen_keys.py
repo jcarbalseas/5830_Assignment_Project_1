@@ -47,7 +47,6 @@ def get_keys(challenge, keyId=0, filename="eth_keys.txt"):
 
     w3 = Web3()
 
-    # Generate or load keys
     if os.path.exists(filename):
         with open(filename, "r") as f:
             private_keys = f.readlines()
@@ -64,14 +63,11 @@ def get_keys(challenge, keyId=0, filename="eth_keys.txt"):
         private_key = private_keys[keyId].strip()
         acct = eth_account.Account.from_key(private_key)
 
-    # Sign the challenge
     msg = eth_account.messages.encode_defunct(challenge)
     sig = w3.eth.account.sign_message(msg, private_key=acct.key)
 
-    # Get Ethereum address from the account
     eth_addr = acct.address
 
-    # Verify the signature to ensure everything works
     assert eth_account.Account.recover_message(msg, signature=sig.signature.hex()) == eth_addr, \
         "Failed to sign message properly"
 
